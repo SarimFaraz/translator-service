@@ -1,4 +1,4 @@
-from src.translator import translate_content, query_llm_robust, get_translation, openai
+from src.translator import translate_content, query_llm_robust, get_translation, client
 from openai import AzureOpenAI
 from unittest.mock import patch
 from src.evaluation_utils import (
@@ -7,7 +7,7 @@ from src.evaluation_utils import (
     evaluate
 )
 
-@patch.object(openai.chat.completions, 'create')
+@patch.object(client.chat.completions, 'create')
 def test_chinese(mock_create):
     """Test Chinese translation with semantic similarity check instead of the hardcoded response given"""
     # Mock both language detection and translation responses
@@ -27,7 +27,7 @@ def test_chinese(mock_create):
     similarity_score = eval_single_response_translation(expected_translation, translated_content)
     assert similarity_score >= 0.9, f"Translation similarity {similarity_score} is below threshold 0.9"
 
-@patch.object(openai.chat.completions, 'create')
+@patch.object(client.chat.completions, 'create')
 def test_llm_normal_response(mock_create):
     """Test when LLM provides expected responses"""
     mock_create.side_effect = [
@@ -50,7 +50,7 @@ def test_llm_normal_response(mock_create):
     assert mock_create.call_count == 2 #API should be called twice: detection & translation
 
 
-@patch.object(openai.chat.completions, 'create')
+@patch.object(client.chat.completions, 'create')
 def test_llm_gibberish_response(mock_create):
     """Test when LLM provides unexpected/gibberish responses"""
     mock_create.return_value = type('Response', (), {
@@ -68,7 +68,7 @@ def test_llm_gibberish_response(mock_create):
 
 # the following is for tests for querry_llm_robust function written in colab:
 # All mock tests should return (True, post) as they trigger error checks.
-@patch.object(openai.chat.completions, 'create')
+@patch.object(client.chat.completions, 'create')
 def test_unexpected_language(mocker):
     # we mock the model's response to return a random message
     mocker.return_value.choices[0].message.content = "I don't understand your request"
@@ -77,7 +77,7 @@ def test_unexpected_language(mocker):
     print("Result", result)
     assert result == (True, "Hier ist dein erstes Beispiel.")
 
-@patch.object(openai.chat.completions, 'create')
+@patch.object(client.chat.completions, 'create')
 def test_empty_response(mocker):
     """Test 2: When API returns empty response"""
     mocker.return_value.choices[0].message.content = ""
@@ -85,7 +85,7 @@ def test_empty_response(mocker):
     result = query_llm_robust("Bonjour le monde!")
     assert result == (True, "Bonjour le monde!")
 
-@patch.object(openai.chat.completions, 'create')
+@patch.object(client.chat.completions, 'create')
 def test_api_error(mocker):
     """Test 3:When API throws an error"""
     mocker.side_effect = Exception("API Error: Service Unavailable")
@@ -93,7 +93,7 @@ def test_api_error(mocker):
     result = query_llm_robust("Mabuhay")
     assert result == (True, "Mabuhay")
 
-@patch.object(openai.chat.completions, 'create')
+@patch.object(client.chat.completions, 'create')
 def test_azure_filter(mocker):
     """Test 4: When content gets filtered by Azure's content management policy"""
     mocker.side_effect = Exception(
@@ -104,7 +104,7 @@ def test_azure_filter(mocker):
     result = query_llm_robust("This is not an English text.")
     assert result == (True, "This is not an English text.")
 
-@patch.object(openai.chat.completions, 'create')
+@patch.object(client.chat.completions, 'create')
 def test_malformed_response(mocker):
     """Test 5: When API returns malformed response"""
     class MockResponse:

@@ -3,19 +3,19 @@ import os
 from openai import AzureOpenAI
 from unittest.mock import patch 
 load_dotenv()
-import openai
-# Set up the Azure OpenAI configuration
-openai.api_key = "489NCFQgORqDhbAU9rhdYiYm6HmDXNBYVVq2NEiLtxEJK8BfFBOzJQQJ99AJACYeBjFXJ3w3AAABACOGmX1P"
-openai.api_base = "https://sarim-openai-resource.openai.azure.com/"
-openai.api_type = "azure"
-openai.api_version = "2024-08-01-preview"
+# Initialize the Azure OpenAI client
+client = AzureOpenAI(
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    api_version="2024-02-15-preview",
+    azure_endpoint=os.getenv("AZURE_OPENAI_API_ENDPOINT")  # Replace with your Azure endpoint
+)
 
 # Use your deployment name
 deployment_name = "sarim-gpt-4"
 
 def get_translation(post: str) -> str:
     try:
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             engine=deployment_name, 
             messages=[
                 {
